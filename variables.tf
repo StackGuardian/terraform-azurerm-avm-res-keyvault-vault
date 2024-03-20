@@ -13,10 +13,35 @@ variable "name" {
   }
 }
 
+variable "existing_resource_id" {
+  type        = string
+  description = "The ID of an existing Key Vault in which to create child resources."
+  default     = null
+  validation {
+    error_message = "The value must be a valid Key Vault resource ID."
+    condition     = can(regex("^/subscriptions/[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/resourceGroups/[^/]+/Microsoft.KeyVault/vaults/[^/]+$", var.existing_resource_id))
+  }
+}
+
+variable "rbac_authorization_enabled" {
+  type        = bool
+  default     = true
+  description = "Specifies whether Azure RBAC authorization is enabled for the Key Vault, or whether you want to use access policies. Recommended to leave as true."
+}
+
 # This is required for most resource modules
 variable "resource_group_name" {
   type        = string
   description = "The resource group where the resources will be deployed."
+}
+
+variable "subscription_id" {
+  type        = string
+  description = "The Azure subscription ID used for authenticating requests to Key Vault. You can use the `azurerm_client_config` data source to retrieve it."
+  validation {
+    error_message = "The subscription ID must be a valid GUID."
+    condition     = can(regex("^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", var.subscription_id))
+  }
 }
 
 variable "tenant_id" {
@@ -35,7 +60,7 @@ variable "contacts" {
     name  = optional(string, null)
     phone = optional(string, null)
   }))
-  default     = {}
+  default     = null
   description = "A map of contacts for the Key Vault. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time."
 }
 
@@ -168,16 +193,15 @@ DESCRIPTION
 
 variable "lock" {
   type = object({
+    kind = string
     name = optional(string, null)
-    kind = optional(string, "None")
   })
-  default     = {}
+  default     = null
   description = "The lock level to apply to the Key Vault. Default is `None`. Possible values are `None`, `CanNotDelete`, and `ReadOnly`."
-  nullable    = false
 
   validation {
-    condition     = contains(["CanNotDelete", "ReadOnly", "None"], var.lock.kind)
-    error_message = "The lock level must be one of: 'None', 'CanNotDelete', or 'ReadOnly'."
+    condition     = var.lock != null ? contains(["CanNotDelete", "ReadOnly"], var.lock.kind) : true
+    error_message = "Lock kind must be either `\"CanNotDelete\"` or `\"ReadOnly\"`."
   }
 }
 
@@ -185,8 +209,8 @@ variable "network_acls" {
   type = object({
     bypass                     = optional(string, "None")
     default_action             = optional(string, "Deny")
-    ip_rules                   = optional(list(string), [])
-    virtual_network_subnet_ids = optional(list(string), [])
+    ip_rules                   = optional(set(string), [])
+    virtual_network_subnet_ids = optional(set(string), [])
   })
   default     = {}
   description = <<DESCRIPTION

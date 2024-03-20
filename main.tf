@@ -1,38 +1,38 @@
-resource "azurerm_key_vault" "this" {
-  location                        = var.location
-  name                            = var.name
-  resource_group_name             = var.resource_group_name
-  sku_name                        = var.sku_name
-  tenant_id                       = var.tenant_id
-  enable_rbac_authorization       = true
-  enabled_for_deployment          = var.enabled_for_deployment
-  enabled_for_disk_encryption     = var.enabled_for_disk_encryption
-  enabled_for_template_deployment = var.enabled_for_template_deployment
-  public_network_access_enabled   = var.public_network_access_enabled
-  purge_protection_enabled        = var.purge_protection_enabled
-  soft_delete_retention_days      = var.soft_delete_retention_days
-  tags                            = var.tags
+# resource "azurerm_key_vault" "this" {
+#   location                        = var.location
+#   name                            = var.name
+#   resource_group_name             = var.resource_group_name
+#   sku_name                        = var.sku_name
+#   tenant_id                       = var.tenant_id
+#   enable_rbac_authorization       = true
+#   enabled_for_deployment          = var.enabled_for_deployment
+#   enabled_for_disk_encryption     = var.enabled_for_disk_encryption
+#   enabled_for_template_deployment = var.enabled_for_template_deployment
+#   public_network_access_enabled   = var.public_network_access_enabled
+#   purge_protection_enabled        = var.purge_protection_enabled
+#   soft_delete_retention_days      = var.soft_delete_retention_days
+#   tags                            = var.tags
 
-  dynamic "contact" {
-    for_each = var.contacts
-    content {
-      email = contact.value.email
-      name  = contact.value.name
-      phone = contact.value.phone
-    }
-  }
-  # Only one network_acls block is allowed.
-  # Create it if the variable is not null.
-  dynamic "network_acls" {
-    for_each = var.network_acls != null ? { this = var.network_acls } : {}
-    content {
-      bypass                     = network_acls.value.bypass
-      default_action             = network_acls.value.default_action
-      ip_rules                   = network_acls.value.ip_rules
-      virtual_network_subnet_ids = network_acls.value.virtual_network_subnet_ids
-    }
-  }
-}
+#   dynamic "contact" {
+#     for_each = var.contacts
+#     content {
+#       email = contact.value.email
+#       name  = contact.value.name
+#       phone = contact.value.phone
+#     }
+#   }
+#   # Only one network_acls block is allowed.
+#   # Create it if the variable is not null.
+#   dynamic "network_acls" {
+#     for_each = var.network_acls != null ? { this = var.network_acls } : {}
+#     content {
+#       bypass                     = network_acls.value.bypass
+#       default_action             = network_acls.value.default_action
+#       ip_rules                   = network_acls.value.ip_rules
+#       virtual_network_subnet_ids = network_acls.value.virtual_network_subnet_ids
+#     }
+#   }
+# }
 
 resource "azurerm_management_lock" "this" {
   count = var.lock.kind != "None" ? 1 : 0
